@@ -19,3 +19,8 @@ Route::get('/konseling', fn() => view('dashboard.konseling'))->name('konseling.i
 Route::get('/laporan', fn() => view('dashboard.laporan'))->name('laporan.index');
 Route::get('/pelanggaran', fn() => view('dashboard.pelanggaran'))->name('pelanggaran.index');
 Route::get('/pengaturan', fn() => view('dashboard.pengaturan'))->name('pengaturan.index');
+
+// 4. Route Halaman Cetak PDF (Membuka view khusus cetak)
+Route::get('/absensi/cetak-pdf', function () {
+    return view('dashboard.absensi-cetak');
+})->name('absensi.cetak-pdf');
