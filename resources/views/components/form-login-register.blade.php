@@ -269,5 +269,61 @@
                 Kembali ke Login
             </button>
         </div>
+
+        {{-- ==================== VIEW SUKSES REGISTER ==================== --}}
+        <div id="view-register-success"
+            class="col-start-1 row-start-1 transition-opacity duration-300 opacity-0 pointer-events-none">
+
+            {{-- Lingkaran centang animasi --}}
+            <div class="flex flex-col items-center justify-center py-6 text-center">
+                <div class="relative mb-6">
+                    {{-- Cincin luar --}}
+                    <div class="h-24 w-24 rounded-full bg-forest-100 flex items-center justify-center">
+                        {{-- Cincin tengah --}}
+                        <div class="h-16 w-16 rounded-full bg-forest-200 flex items-center justify-center">
+                            {{-- Icon --}}
+                            <div
+                                class="h-11 w-11 rounded-full bg-forest-800 flex items-center justify-center shadow-lg shadow-forest-900/20">
+                                <i data-lucide="check" class="h-6 w-6 text-white stroke-[3]"></i>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- Confetti dots --}}
+                    <span class="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-sun-400 shadow-sm"></span>
+                    <span class="absolute top-2 -left-2 h-2 w-2 rounded-full bg-forest-400 shadow-sm"></span>
+                    <span class="absolute -bottom-1 right-1 h-2.5 w-2.5 rounded-full bg-forest-300 shadow-sm"></span>
+                </div>
+
+                <p class="font-display font-bold text-xl text-forest-900 leading-tight mb-1">Pendaftaran Berhasil!</p>
+                <p class="text-xs text-forest-600 font-body leading-relaxed mb-1">
+                    Akun atas nama
+                </p>
+                <p id="success-nama" class="text-sm font-semibold text-forest-800 font-body mb-1">—</p>
+                <p class="text-xs text-forest-500 font-body leading-relaxed">
+                    telah berhasil didaftarkan.<br>Silakan login untuk masuk ke sistem.
+                </p>
+
+                {{-- Badge role --}}
+                <div id="success-badge"
+                    class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-forest-100 border border-forest-200">
+                    <i data-lucide="user-check" class="h-3.5 w-3.5 text-forest-700"></i>
+                    <span id="success-role-text" class="text-xs font-semibold text-forest-700 font-body">—</span>
+                </div>
+            </div>
+
+            {{-- Tombol aksi --}}
+            <button type="button" id="btn-goto-login"
+                class="btn-ripple relative w-full rounded-xl bg-forest-800 py-3 text-sm font-semibold text-white shadow-md shadow-forest-800/30 hover:bg-forest-700 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 font-body">
+                Masuk Sekarang
+            </button>
+
+            <button type="button" id="btn-register-again"
+                class="btn-ripple relative w-full mt-3 rounded-xl border-2 border-forest-200 py-2.5 text-xs font-semibold text-forest-700 hover:border-forest-400 hover:bg-forest-50 transition-all duration-300 font-body">
+                Daftarkan Akun Lain
+            </button>
+
+        </div>
+        {{-- ==================== END VIEW SUKSES ==================== --}}
+
     </div>
 </div>

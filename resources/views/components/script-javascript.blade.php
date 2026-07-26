@@ -96,10 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // =======================================================
     // 6. SHOW / HIDE PASSWORD TOGGLE
     // =======================================================
-    /**
-     * Setiap tombol toggle punya attribute [data-toggle-pw="<id-input>"]
-     * Icon .icon-eye dan .icon-eye-off ada di dalam tombol.
-     */
     document.querySelectorAll('[data-toggle-pw]').forEach(btn => {
         btn.addEventListener('click', function() {
             const inputId = this.getAttribute('data-toggle-pw');
@@ -113,12 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const eyeOffIcon = this.querySelector('.icon-eye-off');
 
             if (isHidden) {
-                // sedang tampilkan → ganti ke eye-off
                 eyeIcon.classList.add('hidden');
                 eyeOffIcon.classList.remove('hidden');
                 this.setAttribute('aria-label', 'Sembunyikan password');
             } else {
-                // sedang sembunyikan → ganti ke eye
                 eyeIcon.classList.remove('hidden');
                 eyeOffIcon.classList.add('hidden');
                 this.setAttribute('aria-label', 'Tampilkan password');
@@ -127,22 +121,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =======================================================
-    // 7. LOGIC AUTH (LOGIN & REGISTER TOGGLE)
+    // 7. VIEW SWITCHER — helper utama navigasi antar panel
     // =======================================================
     const viewLogin = document.getElementById('view-login');
     const viewRegister = document.getElementById('view-register');
+    const viewRegisterSuccess = document.getElementById('view-register-success');
     const btnShowRegister = document.getElementById('btn-show-register');
     const btnShowLogin = document.getElementById('btn-show-login');
+    const btnGotoLogin = document.getElementById('btn-goto-login');
+    const btnRegisterAgain = document.getElementById('btn-register-again');
 
-    const switchAuthView = (hideElement, showElement) => {
-        hideElement.classList.remove('opacity-100');
-        hideElement.classList.add('opacity-0', 'pointer-events-none');
-        showElement.classList.remove('opacity-0', 'pointer-events-none');
-        showElement.classList.add('opacity-100');
+    const allViews = [viewLogin, viewRegister, viewRegisterSuccess];
+
+    /**
+     * Sembunyikan semua panel, tampilkan satu panel target.
+     * Pakai opacity + pointer-events supaya grid overlap tetap smooth.
+     */
+    const showView = (target) => {
+        allViews.forEach(view => {
+            if (view === target) {
+                view.classList.remove('opacity-0', 'pointer-events-none');
+                view.classList.add('opacity-100');
+            } else {
+                view.classList.remove('opacity-100');
+                view.classList.add('opacity-0', 'pointer-events-none');
+            }
+        });
     };
 
-    btnShowRegister.addEventListener('click', () => switchAuthView(viewLogin, viewRegister));
-    btnShowLogin.addEventListener('click', () => switchAuthView(viewRegister, viewLogin));
+    btnShowRegister.addEventListener('click', () => showView(viewRegister));
+    btnShowLogin.addEventListener('click', () => showView(viewLogin));
+
+    // Dari success → login
+    btnGotoLogin.addEventListener('click', () => showView(viewLogin));
+
+    // Dari success → register lagi (reset form dulu)
+    btnRegisterAgain.addEventListener('click', () => {
+        resetRegisterForm();
+        showView(viewRegister);
+    });
 
     // =======================================================
     // 8. FORM REGISTER — ROLE / KELAS / JURUSAN LOGIC
@@ -152,28 +169,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const hiddenKelas = document.getElementById('reg_kelas');
     const hiddenJurusan = document.getElementById('reg_jurusan');
 
-    // Sync hidden input kelas setiap kali radio kelas berubah
     document.querySelectorAll('input[name="kelas"]').forEach(input => {
         input.addEventListener('change', (e) => {
             if (hiddenKelas) hiddenKelas.value = e.target.value;
         });
     });
 
-    // Sync hidden input jurusan setiap kali radio jurusan berubah
     document.querySelectorAll('input[name="jurusan"]').forEach(input => {
         input.addEventListener('change', (e) => {
             if (hiddenJurusan) hiddenJurusan.value = e.target.value;
         });
     });
 
-    // Tampil/sembunyi wrapper kelas & jurusan berdasarkan role
     roleInputs.forEach(input => {
         input.addEventListener('change', (e) => {
             if (e.target.value === 'siswa') {
                 wrapperKelasJurusan.classList.remove('hidden');
             } else {
                 wrapperKelasJurusan.classList.add('hidden');
-                // Reset semua radio kelas & jurusan
                 document.querySelectorAll('input[name="kelas"]').forEach(r => r.checked =
                     false);
                 document.querySelectorAll('input[name="jurusan"]').forEach(r => r.checked =
@@ -185,7 +198,60 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =======================================================
-    // 9. FORM REGISTER — VALIDASI SUBMIT
+    // 9. RESET FORM REGISTER — bersihkan semua field & state
+    // =======================================================
+    const resetRegisterForm = () => {
+        const formRegister = document.getElementById('form-register');
+
+        // Reset semua input text, email, password ke kosong
+        formRegister.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]')
+            .forEach(input => {
+                input.value = '';
+            });
+
+        // Reset radio role ke default (Guru)
+        const guruRadio = formRegister.querySelector('input[name="role"][value="guru"]');
+        if (guruRadio) guruRadio.checked = true;
+
+        // Reset radio kelas & jurusan
+        formRegister.querySelectorAll('input[name="kelas"]').forEach(r => r.checked = false);
+        formRegister.querySelectorAll('input[name="jurusan"]').forEach(r => r.checked = false);
+
+        // Reset hidden input kelas & jurusan
+        if (hiddenKelas) hiddenKelas.value = '';
+        if (hiddenJurusan) hiddenJurusan.value = '';
+
+        // Sembunyikan wrapper kelas & jurusan (karena default Guru)
+        wrapperKelasJurusan.classList.add('hidden');
+
+        // Kembalikan semua password input ke type="password" & reset ikon toggle
+        formRegister.querySelectorAll('input[type="text"]').forEach(input => {
+            // Kalau ini adalah input password yang sedang di-show, kembalikan
+            if (['reg_password', 'reg_password_confirm'].includes(input.id)) {
+                input.type = 'password';
+                const btn = document.querySelector(`[data-toggle-pw="${input.id}"]`);
+                if (btn) {
+                    btn.querySelector('.icon-eye')?.classList.remove('hidden');
+                    btn.querySelector('.icon-eye-off')?.classList.add('hidden');
+                }
+            }
+        });
+
+        // Sembunyikan error box
+        const errBox = document.getElementById('reg-error-box');
+        const errText = document.getElementById('reg-error-text');
+        if (errBox) errBox.classList.add('hidden');
+        if (errText) errText.textContent = '';
+
+        // Hapus border merah dari konfirmasi password jika ada
+        const pwConfInput = document.getElementById('reg_password_confirm');
+        if (pwConfInput) {
+            pwConfInput.classList.remove('border-red-400', 'ring-2', 'ring-red-200');
+        }
+    };
+
+    // =======================================================
+    // 10. FORM REGISTER — VALIDASI & SUBMIT
     // =======================================================
     const formRegister = document.getElementById('form-register');
     const errBox = document.getElementById('reg-error-box');
@@ -194,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const showError = (msg) => {
         errText.textContent = msg;
         errBox.classList.remove('hidden');
-        // Auto scroll ke pesan error
         errBox.scrollIntoView({
             behavior: 'smooth',
             block: 'nearest'
@@ -211,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearError();
 
         const role = document.querySelector('input[name="role"]:checked')?.value;
+        const nama = document.getElementById('reg_name').value.trim();
 
         // Validasi kelas & jurusan jika siswa
         if (role === 'siswa') {
@@ -227,10 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // -------------------------------------------------------
-        // Validasi password — ambil value LANGSUNG dari elemen
-        // supaya tidak ada masalah whitespace atau referensi stale
-        // -------------------------------------------------------
+        // Ambil value password langsung dari elemen (fresh, anti-stale)
         const pwInput = document.getElementById('reg_password');
         const pwConfInput = document.getElementById('reg_password_confirm');
         const pwVal = pwInput.value;
@@ -242,11 +305,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Bandingkan karakter per karakter (menghindari masalah encoding)
         if (pwVal !== pwConfVal) {
             showError('Password dan Konfirmasi Password tidak sama!');
             pwConfInput.focus();
-            // Highlight input konfirmasi
             pwConfInput.classList.add('border-red-400', 'ring-2', 'ring-red-200');
             pwConfInput.addEventListener('input', function handler() {
                 pwConfInput.classList.remove('border-red-400', 'ring-2', 'ring-red-200');
@@ -255,14 +316,40 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Semua validasi lolos
-        clearError();
-        alert('Validasi Frontend Sukses! Formulir siap dikirim ke backend.');
+        // ── Semua validasi lolos ──────────────────────────────────
+        // Isi konten success view dengan data yang diinput
+        const successNama = document.getElementById('success-nama');
+        const successRoleText = document.getElementById('success-role-text');
+
+        if (successNama) successNama.textContent = nama || '—';
+
+        if (successRoleText) {
+            const kelasChecked = document.querySelector('input[name="kelas"]:checked')?.value ?? '';
+            const jurusanChecked = document.querySelector('input[name="jurusan"]:checked')?.value ?? '';
+
+            if (role === 'siswa' && kelasChecked && jurusanChecked) {
+                successRoleText.textContent = `Siswa · Kelas ${kelasChecked} ${jurusanChecked}`;
+            } else if (role === 'siswa') {
+                successRoleText.textContent = 'Siswa';
+            } else {
+                successRoleText.textContent = 'Guru BK';
+            }
+        }
+
+        // Reset form SEBELUM tampil success (data sudah dicapture di atas)
+        resetRegisterForm();
+
+        // Tampilkan panel sukses
+        showView(viewRegisterSuccess);
+
+        // Re-init Lucide supaya icon di success view ke-render
+        lucide.createIcons();
+
         // formRegister.submit(); // Buka komentar jika route sudah siap
     });
 
     // =======================================================
-    // 10. LOGIN FORM — Redirect ke Dashboard
+    // 11. LOGIN FORM — Redirect ke Dashboard
     // =======================================================
     const loginForm = document.querySelector('#view-login form');
     if (loginForm) {
