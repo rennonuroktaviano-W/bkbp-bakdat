@@ -129,7 +129,7 @@
         </main>
     </div>
 
-    {{-- MODAL TAMBAH SISWA BARU (Struktur disamakan dengan Edit, tanpa Poin Pelanggaran) --}}
+    {{-- MODAL TAMBAH SISWA BARU --}}
     <div id="tambahSiswaModal"
         class="fixed inset-0 z-50 hidden bg-forest-950/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div
@@ -152,19 +152,19 @@
                             class="w-full px-3 py-2 rounded-xl border border-forest-200 focus:outline-none focus:ring-2 focus:ring-forest-400/40 text-forest-800">
                     </div>
                     <div>
-                        <label class="block font-medium text-forest-700 mb-1">Nama Lengkap Siswa</label>
+                        <label class="block font-medium text-forest-700 mb-1">Nama Lengkap Siswa (Hanya Huruf)</label>
                         <input type="text" id="tambahNama" required placeholder="Nama lengkap siswa"
                             class="w-full px-3 py-2 rounded-xl border border-forest-200 focus:outline-none focus:ring-2 focus:ring-forest-400/40 text-forest-800">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block font-medium text-forest-700 mb-1">No. HP Siswa</label>
-                            <input type="text" id="tambahHp" required placeholder="08xxxxxxxxxx"
+                            <label class="block font-medium text-forest-700 mb-1">No. HP Siswa (Angka)</label>
+                            <input type="number" id="tambahHp" required placeholder="08xxxxxxxxxx"
                                 class="w-full px-3 py-2 rounded-xl border border-forest-200 focus:outline-none focus:ring-2 focus:ring-forest-400/40 text-forest-800">
                         </div>
                         <div>
-                            <label class="block font-medium text-forest-700 mb-1">No. HP Orang Tua</label>
-                            <input type="text" id="tambahHpOrtu" required placeholder="08xxxxxxxxxx"
+                            <label class="block font-medium text-forest-700 mb-1">No. HP Orang Tua (Angka)</label>
+                            <input type="number" id="tambahHpOrtu" required placeholder="08xxxxxxxxxx"
                                 class="w-full px-3 py-2 rounded-xl border border-forest-200 focus:outline-none focus:ring-2 focus:ring-forest-400/40 text-forest-800">
                         </div>
                     </div>
@@ -233,12 +233,12 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block font-medium text-forest-700 mb-1">No. HP Siswa</label>
-                            <input type="text" id="editHp" required
+                            <input type="number" id="editHp" required
                                 class="w-full px-3 py-2 rounded-xl border border-forest-200 focus:outline-none focus:ring-2 focus:ring-forest-400/40 text-forest-800">
                         </div>
                         <div>
                             <label class="block font-medium text-forest-700 mb-1">No. HP Orang Tua</label>
-                            <input type="text" id="editHpOrtu" required
+                            <input type="number" id="editHpOrtu" required
                                 class="w-full px-3 py-2 rounded-xl border border-forest-200 focus:outline-none focus:ring-2 focus:ring-forest-400/40 text-forest-800">
                         </div>
                     </div>
@@ -356,19 +356,85 @@
 
     function simpanTambahSiswa(event) {
         event.preventDefault();
-        const kelasBaru = document.getElementById('tambahKelas').value;
-        const jkBaru = document.getElementById('tambahJk').value;
 
-        if (!kelasBaru) {
+        const nisn = document.getElementById('tambahNisn').value;
+        const nama = document.getElementById('tambahNama').value.trim();
+        const hp = document.getElementById('tambahHp').value.trim();
+        const hpOrtu = document.getElementById('tambahHpOrtu').value.trim();
+        const kelas = document.getElementById('tambahKelas').value;
+        const jk = document.getElementById('tambahJk').value;
+
+        // Validasi 1: Nama hanya boleh berisi huruf dan spasi
+        const regexNama = /^[A-Za-z\s]+$/;
+        if (!regexNama.test(nama)) {
+            alert('Nama lengkap siswa hanya boleh berisi huruf!');
+            return;
+        }
+
+        // Validasi 2: No. HP Siswa harus integer (angka saja)
+        const regexInteger = /^\d+$/;
+        if (!regexInteger.test(hp)) {
+            alert('Nomor HP Siswa harus berupa angka (integer)!');
+            return;
+        }
+
+        // Validasi 3: No. HP Orang Tua harus integer (angka saja)
+        if (!regexInteger.test(hpOrtu)) {
+            alert('Nomor HP Orang Tua harus berupa angka (integer)!');
+            return;
+        }
+
+        if (!kelas) {
             alert('Silakan pilih kelas terlebih dahulu!');
             return;
         }
-        if (!jkBaru) {
+        if (!jk) {
             alert('Silakan pilih jenis kelamin terlebih dahulu!');
             return;
         }
 
-        alert('Fitur simpan siswa baru berhasil diproses!');
+        // Tentukan tingkat & jurusan otomatis berdasarkan string kelas
+        const tingkat = kelas.toUpperCase().includes('XII') ? 'XII' : (kelas.toUpperCase().includes('XI') ? 'XI' : 'X');
+        const jurusan = kelas.toUpperCase().includes('RPL') ? 'RPL' : (kelas.toUpperCase().includes('TKJ') ? 'TKJ' :
+            'DKV');
+
+        // Buat elemen baris <tr> baru
+        const tbody = document.getElementById('listSiswaBody');
+        const newRow = document.createElement('tr');
+        newRow.className = "hover:bg-forest-50/30 transition-colors";
+        newRow.setAttribute('data-nama', nama);
+        newRow.setAttribute('data-kelas', tingkat);
+        newRow.setAttribute('data-jurusan', jurusan);
+        newRow.setAttribute('data-hp', hp);
+        newRow.setAttribute('data-hportu', hpOrtu);
+        newRow.setAttribute('data-jk', jk);
+        newRow.setAttribute('data-poin', '0');
+
+        newRow.innerHTML = `
+            <td class="px-5 py-3.5 text-forest-500 nisn-val">${nisn}</td>
+            <td class="px-5 py-3.5 text-forest-900 font-semibold nama-val">${nama}</td>
+            <td class="px-4 py-3.5 text-forest-600 kelas-val">${kelas}</td>
+            <td class="px-4 py-3.5 text-forest-600 jk-val">${jk}</td>
+            <td class="px-4 py-3.5">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-forest-50 text-forest-700 poin-val">0 Poin</span>
+            </td>
+            <td class="px-4 py-3.5 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <button title="Edit Data" onclick="openEditModal(this)"
+                        class="p-1.5 hover:bg-amber-100 text-amber-600 rounded-lg transition-colors cursor-pointer"><i
+                            data-lucide="edit-3" class="h-4 w-4"></i></button>
+                </div>
+            </td>
+        `;
+
+        // Masukkan ke tabel dan urutkan kembali
+        tbody.appendChild(newRow);
+        urutkanTabelOtomatis();
+
+        // Render ulang ikon Lucide untuk tombol edit di baris baru
+        lucide.createIcons();
+
+        alert('Siswa baru berhasil ditambahkan!');
         closeModal();
     }
 
