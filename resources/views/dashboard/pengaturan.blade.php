@@ -197,7 +197,109 @@
     <script>
     lucide.createIcons();
 
-    // Dynamic Tab Switching
+    // ============================================================
+    // LOCALSTORAGE KEYS
+    // ============================================================
+    const LS_NAME = 'bkbp_profile_name';
+    const LS_AVATAR = 'bkbp_profile_avatar';
+
+    // ============================================================
+    // INISIALISASI: isi form & preview dari localStorage saat load
+    // ============================================================
+    (function init() {
+        const savedName = localStorage.getItem(LS_NAME);
+        const savedAvatar = localStorage.getItem(LS_AVATAR);
+
+        if (savedName) {
+            const inputEl = document.getElementById('inputNamaLengkap');
+            if (inputEl) inputEl.value = savedName;
+            applyNameToDOM(savedName);
+        }
+
+        if (savedAvatar) {
+            applyAvatarToDOM(savedAvatar);
+        }
+    })();
+
+    // ============================================================
+    // HELPER: apply nama ke semua elemen di halaman ini
+    // ============================================================
+    function applyNameToDOM(name) {
+        const greetingEl = document.getElementById('topbar-greeting-name');
+        const sidebarNameEl = document.getElementById('sidebar-user-name');
+        if (greetingEl) greetingEl.textContent = name;
+        if (sidebarNameEl) sidebarNameEl.textContent = name;
+    }
+
+    // ============================================================
+    // HELPER: apply avatar ke semua elemen img di halaman ini
+    // ============================================================
+    function applyAvatarToDOM(src) {
+        ['avatarPreview', 'topbar-avatar-img', 'sidebar-avatar-img'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.src = src;
+        });
+    }
+
+    // ============================================================
+    // SYNC NAMA — dipanggil oninput, simpan ke localStorage
+    // ============================================================
+    function syncProfileName(nameVal) {
+        const cleanName = nameVal.trim() || 'Pengguna';
+        applyNameToDOM(cleanName);
+        // Belum disimpan permanen — baru disimpan saat klik "Simpan Perubahan"
+    }
+
+    // ============================================================
+    // PREVIEW & SYNC FOTO — langsung apply, simpan saat Save
+    // ============================================================
+    function previewImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                applyAvatarToDOM(e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // ============================================================
+    // HAPUS FOTO — kembali ke default & hapus dari localStorage
+    // ============================================================
+    function removeAvatar() {
+        const defaultAvatar = "https://ui-avatars.com/api/?name=Bu+Ratna&background=065f46&color=fff";
+        applyAvatarToDOM(defaultAvatar);
+        localStorage.removeItem(LS_AVATAR);
+    }
+
+    // ============================================================
+    // SIMPAN SEMUA — baru di sini data ditulis ke localStorage
+    // ============================================================
+    function saveAllSettings() {
+        // Simpan nama
+        const namaEl = document.getElementById('inputNamaLengkap');
+        if (namaEl && namaEl.value.trim()) {
+            localStorage.setItem(LS_NAME, namaEl.value.trim());
+        }
+
+        // Simpan avatar (ambil dari img preview yang sudah di-set)
+        const previewEl = document.getElementById('avatarPreview');
+        if (previewEl && previewEl.src && !previewEl.src.includes('ui-avatars.com')) {
+            // Hanya simpan kalau bukan URL default (base64 dari upload)
+            try {
+                localStorage.setItem(LS_AVATAR, previewEl.src);
+            } catch (e) {
+                // Kalau file terlalu besar untuk localStorage, skip
+                console.warn('Avatar terlalu besar untuk disimpan di localStorage.');
+            }
+        }
+
+        showToast("Seluruh pengaturan profil berhasil diperbarui!");
+    }
+
+    // ============================================================
+    // TAB SWITCHING
+    // ============================================================
     function switchTab(tabId) {
         document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -215,67 +317,14 @@
     // Initial Active Tab
     switchTab('profil');
 
-    // Real-time Name Sync to Topbar Greeting
-    function syncProfileName(nameVal) {
-        const cleanName = nameVal.trim() || 'Pengguna';
-
-        // Target sapaan "Halo, Bu ..." pada Topbar / Dashboard
-        const allHeadings = document.querySelectorAll('h1, h2, h3, h4, span, div, p');
-        allHeadings.forEach(el => {
-            if (el.children.length <= 1 && el.textContent.includes('Halo,')) {
-                el.innerHTML = `Halo, ${cleanName} 👋`;
-            }
-        });
-
-        // Update inisial lingkaran profil jika berupa teks (contoh: BR)
-        const initials = cleanName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        document.querySelectorAll('.topbar-avatar-badge, [class*="rounded-full"]').forEach(el => {
-            if (el.textContent.length === 2 && el.tagName !== 'INPUT') {
-                el.textContent = initials;
-            }
-        });
-    }
-
-    // Real-time Photo Avatar Sync
-    function previewImage(input, previewId) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const imgDataUrl = e.target.result;
-
-                // Update foto preview di halaman pengaturan
-                document.getElementById(previewId).src = imgDataUrl;
-
-                // Update foto profil di topbar (jika menggunakan elemen <img>)
-                document.querySelectorAll('.topbar-avatar-img, header img, nav img').forEach(img => {
-                    img.src = imgDataUrl;
-                });
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    function removeAvatar() {
-        const defaultAvatar = "https://ui-avatars.com/api/?name=Bu+Ratna&background=065f46&color=fff";
-        document.getElementById('avatarPreview').src = defaultAvatar;
-
-        document.querySelectorAll('.topbar-avatar-img, header img, nav img').forEach(img => {
-            img.src = defaultAvatar;
-        });
-    }
-
-    function saveAllSettings() {
-        showToast("Seluruh pengaturan profil berhasil diperbarui!");
-    }
-
+    // ============================================================
+    // TOAST
+    // ============================================================
     function showToast(msg) {
         const toast = document.getElementById('toast');
         document.getElementById('toastMsg').textContent = msg;
         toast.classList.remove('translate-y-20', 'opacity-0');
-
-        setTimeout(() => {
-            toast.classList.add('translate-y-20', 'opacity-0');
-        }, 3000);
+        setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
     }
 
     function resetForm() {
